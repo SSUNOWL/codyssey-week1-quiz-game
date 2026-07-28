@@ -12,7 +12,7 @@ import os
 
 from quiz import Quiz
 from default_quizzes import default_quizzes
-from helpers import read_int
+from helpers import read_int, read_nonempty
 
 
 class QuizGame:
@@ -126,7 +126,23 @@ class QuizGame:
         self.save()  # 최고 점수 갱신 결과를 파일에 반영
 
     def add_quiz(self):
-        print("🚧 (준비 중) 퀴즈 추가 기능은 곧 제공됩니다.")
+        """사용자에게 문제·선택지 4개·정답 번호(+힌트)를 받아 새 퀴즈를 등록하고 저장한다."""
+        print("\n📌 새로운 퀴즈를 추가합니다.")
+        question = read_nonempty("문제를 입력하세요: ")
+        choices = [read_nonempty(f"선택지 {i}: ") for i in range(1, Quiz.CHOICE_COUNT + 1)]
+        answer = read_int(f"정답 번호 (1-{Quiz.CHOICE_COUNT}): ", 1, Quiz.CHOICE_COUNT)
+        hint = input("힌트 (없으면 그냥 Enter): ").strip()  # 힌트는 선택 입력
+
+        try:
+            quiz = Quiz(question, choices, answer, hint)
+        except ValueError as error:
+            # 이론상 위 입력 검증을 통과하지만, 방어적으로 한 번 더 확인한다.
+            print(f"⚠️  퀴즈를 만들 수 없습니다: {error}")
+            return
+
+        self.quizzes.append(quiz)
+        self.save()
+        print("✅ 퀴즈가 추가되었습니다!")
 
     def list_quizzes(self):
         """등록된 모든 퀴즈의 문제 지문을 번호와 함께 보여준다."""
