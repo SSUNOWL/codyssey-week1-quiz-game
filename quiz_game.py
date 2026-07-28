@@ -30,23 +30,39 @@ class QuizGame:
     # ------------------------------------------------------------------
     # 파일 입출력 (state.json)
     # ------------------------------------------------------------------
+    def _use_defaults(self):
+        """상태를 기본 퀴즈로 초기화(파일 없음/손상 시 공통 사용)."""
+        self.quizzes = default_quizzes()
+        self.best_score = None
+        self.history = []
+
     def load(self):
-        """state.json에서 상태를 불러온다. 파일이 없으면 기본 퀴즈로 시작."""
+        """state.json에서 상태를 불러온다.
+
+        - 파일이 없으면(첫 실행) 기본 퀴즈로 시작한다.
+        - 파일이 손상되었거나 읽기 오류가 나면 안내 후 기본 퀴즈로 복구한다.
+        """
         if not os.path.exists(self.path):
             print("📂 저장된 데이터가 없어 기본 퀴즈로 시작합니다.")
-            self.quizzes = default_quizzes()
-            self.best_score = None
-            self.history = []
+            self._use_defaults()
             return
 
-        with open(self.path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        self.quizzes = [Quiz.from_dict(d) for d in data.get("quizzes", [])]
-        raw_best = data.get("best_score", None)
-        self.best_score = int(raw_best) if isinstance(raw_best, (int, float)) else None
-        self.history = list(data.get("history", []))
-        if not self.quizzes:  # 파일에 퀴즈가 하나도 없으면 기본으로 보강
-            self.quizzes = default_quizzes()
+        try:
+            with open(self.path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            quizzes = [Quiz.from_dict(d) for d in data.get("quizzes", [])]
+            raw_best = data.get("best_score", None)
+            best_score = int(raw_best) if isinstance(raw_best, (int, float)) else None
+            history = list(data.get("history", []))
+        except (json.JSONDecodeError, OSError, ValueError, KeyError, TypeError) as error:
+            # 파일이 깨졌거나 형식이 어긋난 경우 → 프로그램을 멈추지 않고 복구한다.
+            print(f"⚠️  데이터 파일이 손상되어 기본 퀴즈로 복구합니다. (원인: {error})")
+            self._use_defaults()
+            return
+
+        self.quizzes = quizzes if quizzes else default_quizzes()
+        self.best_score = best_score
+        self.history = history
         print(f"📂 저장된 데이터를 불러왔습니다. (퀴즈 {len(self.quizzes)}개, 최고점수 {self.best_score_text()})")
 
     def save(self):
@@ -56,8 +72,11 @@ class QuizGame:
             "best_score": self.best_score,
             "history": self.history,
         }
-        with open(self.path, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+        try:
+            with open(self.path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+        except OSError as error:
+            print(f"⚠️  저장 중 오류가 발생했습니다: {error}")
 
     def best_score_text(self):
         """최고 점수를 사람이 읽기 좋은 문자열로. 아직 안 풀었으면 '아직 없음'."""
