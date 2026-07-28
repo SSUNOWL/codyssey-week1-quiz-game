@@ -1,0 +1,28 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# --- 런타임 데이터 (첫 실행 시 자동 생성, 커밋 금지) ---
+state.json
+
+# --- Secrets ---
+.env
+.env.*
+*.key
+*.pem
+*.token
+
+# --- OS / Editor ---
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+
+# --- 로컬 오케스트레이션 (혹시 복사될 경우) ---
+.orchestra/
+.claude/
