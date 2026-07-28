@@ -1,3 +1,249 @@
 # 🎬 나만의 퀴즈 게임 — 영화 / 시네마
 
-터미널에서 동작하는 영화 주제 퀴즈 게임. (작성 중)
+터미널에서 동작하는 영화 주제 퀴즈 게임. Python 기본 문법 + 객체지향(클래스) +
+JSON 파일 영속성으로 구현했다. 프로그램을 종료했다가 다시 켜도 추가한 퀴즈와 최고
+점수가 유지된다.
+
+- **저장소:** `https://github.com/SSUNOWL/codyssey-week1-quiz-game` · 제출 브랜치: **`main`**
+- **실행:** `python main.py` (Python 3.10 이상, 표준 라이브러리만 사용)
+
+---
+
+## 1. 프로젝트 개요
+
+메뉴에서 번호를 선택하면 **퀴즈 풀기 / 추가 / 목록 / 점수 확인 / 삭제 / 종료**가
+분기 실행되는 콘솔 프로그램이다. 개별 문제는 `Quiz` 클래스, 게임 전체 흐름은
+`QuizGame` 클래스로 역할을 나눴고, 데이터는 프로젝트 루트 `state.json`에 UTF-8로
+저장·복원한다. 잘못된 입력·강제 종료(Ctrl+C)·파일 손상 상황에서도 프로그램이
+비정상 종료하지 않도록 방어 처리했다.
+
+## 2. 퀴즈 주제 선정 이유 — 영화 / 시네마
+
+- **누구나 아는 공통 화제**라 문제를 만들기도, 함께 즐기기도 쉽다. 감독·수상·캐릭터 등
+  난이도(쉬움~어려움)를 자연스럽게 섞을 수 있어 퀴즈 주제로 적합하다.
+- 봉준호(기생충)·제임스 카메론(타이타닉/아바타)처럼 **사실 기반의 명확한 정답**이
+  존재해 정오답 판정이 애매하지 않다.
+- 개인적으로 영화를 좋아해 문제 지문·힌트를 **직접 쓰기 즐거운** 주제였다.
+
+## 3. 실행 방법
+
+```bash
+# 1) 저장소 클론
+git clone https://github.com/SSUNOWL/codyssey-week1-quiz-game.git
+cd codyssey-week1-quiz-game
+
+# 2) 실행 (Python 3.10+)
+python main.py
+```
+
+> 외부 라이브러리 설치가 전혀 필요 없다(표준 라이브러리만 사용). 첫 실행 시
+> `state.json`이 없으면 기본 영화 퀴즈 6문항으로 자동 시작한다.
+
+## 4. 기능 목록
+
+| 메뉴 | 기능 | 설명 |
+|------|------|------|
+| 1 | 퀴즈 풀기 | 문제 수 선택 → 무작위 출제 → 정오답 판정 → 결과·점수 표시 |
+| 2 | 퀴즈 추가 | 문제·선택지 4개·정답 번호(+힌트) 입력 → `state.json`에 저장 |
+| 3 | 퀴즈 목록 | 등록된 모든 문제를 번호와 함께 표시 (없으면 안내) |
+| 4 | 점수 확인 | 최고 점수 + 최근 게임 기록 표시 (미플레이 시 안내) |
+| 5 | 퀴즈 삭제 | 목록에서 번호를 골라 삭제 후 파일 반영 *(보너스)* |
+| 6 | 종료 | 저장 후 안전하게 종료 |
+
+**보너스(전부 구현):** ⭐ 랜덤 출제 · ⭐ 문제 수 선택 · ⭐ 힌트(사용 시 해당 문제
+점수 제외) · ⭐ 퀴즈 삭제 · ⭐ 점수 기록 히스토리(날짜·문항 수·점수).
+
+## 5. 파일 구조
+
+```
+codyssey-week1-quiz-game/
+├─ main.py            # 진입점: UTF-8 설정, 실행 루프, Ctrl+C/EOF 안전 종료
+├─ quiz.py            # Quiz 클래스: 문제·선택지4·정답·힌트 (+ 출력/정답확인/직렬화)
+├─ quiz_game.py       # QuizGame 클래스: 메뉴·풀기·추가·목록·삭제·점수·저장/불러오기
+├─ default_quizzes.py # 기본 영화 퀴즈 6문항 (Quiz 인스턴스로 생성)
+├─ helpers.py         # 입력 검증 함수(공백·숫자변환·범위·빈입력 처리)
+├─ state.json         # 런타임 데이터(첫 실행 시 자동 생성, .gitignore 대상)
+├─ .gitignore
+├─ README.md
+└─ docs/screenshots/  # 실행 결과 스크린샷
+```
+
+- **클래스 2개**(`Quiz`, `QuizGame`)로 역할 분리 + 입력 로직은 `helpers.py`로 함수 분리.
+
+## 6. 데이터 파일 설명 — `state.json`
+
+- **경로:** 프로젝트 루트 `./state.json` (실행 위치 기준)
+- **역할:** 퀴즈 목록·최고 점수·게임 기록을 저장해 **재시작 후에도 데이터 유지**
+- **인코딩:** UTF-8 (`ensure_ascii=False`로 한글 그대로 저장)
+- **없을 때:** 기본 퀴즈 6문항으로 시작 · **손상 시:** 안내 후 기본 데이터로 복구
+- **버전 관리:** 런타임 데이터이므로 `.gitignore`로 제외(코드에 기본값 내장)
+
+**스키마**
+
+```json
+{
+  "quizzes": [
+    { "question": "영화 '기생충'의 감독은?",
+      "choices": ["박찬욱", "봉준호", "김기덕", "이창동"],
+      "answer": 2,
+      "hint": "2019년 칸 영화제 황금종려상 수상작입니다." }
+  ],
+  "best_score": 80,
+  "history": [
+    { "datetime": "2026-07-28 18:36:30", "total": 5, "correct": 4, "score": 80 }
+  ]
+}
+```
+
+| 키 | 의미 |
+|----|------|
+| `quizzes` | 퀴즈 목록(문제·선택지 4개·정답 번호 1~4·힌트) |
+| `best_score` | 최고 점수(백분율). 아직 안 풀었으면 `null` |
+| `history` | 게임 기록(날짜시간·문항 수·정답 수·점수) *(보너스)* |
+
+---
+
+## 7. 입력 / 예외 처리 (공통 기준 충족)
+
+| 상황 | 처리 |
+|------|------|
+| 앞뒤 공백 | `strip()`으로 제거 후 처리 (예: `" 1 "` → `1`) |
+| 숫자 아님(`abc`) | 안내 후 재입력 |
+| 범위 밖(메뉴 `9`, 정답 `0`) | 안내 후 재입력 |
+| 빈 입력(그냥 Enter) | 안내 후 재입력 |
+| `Ctrl+C` / 입력 종료(EOF) | 안내 + 저장 후 안전 종료 |
+| 데이터 파일 없음 | 기본 퀴즈로 시작 |
+| 데이터 파일 손상 | 안내 후 기본 퀴즈로 복구 |
+
+## 8. 학습 개념 정리 (코드 근거)
+
+| 개념 | 코드 위치 | 한 줄 설명 |
+|------|-----------|-----------|
+| 변수·자료형(`int/str/bool/list/dict`) | 전반 | 점수(int)·문제(str)·선택지(list)·저장데이터(dict) 등으로 사용 |
+| `if/elif/else` | `quiz_game.run()` | 메뉴 번호에 따라 다른 기능 분기 |
+| `for` vs `while` | `play()`(for), `run()`/`read_int()`(while) | 개수가 정해진 반복은 for, 조건 반복은 while |
+| 함수(매개변수·반환) | `helpers.read_int(prompt, low, high)` | 입력 검증을 함수로 분리·재사용 |
+| 클래스(`__init__`·`self`) | `Quiz`, `QuizGame` | 데이터+동작을 한 단위로 묶어 역할 분리 |
+| 파일 입출력·JSON·`try/except` | `QuizGame.load()/save()` | JSON으로 영속화, 손상 시 예외 처리로 복구 |
+
+## 9. Git 워크플로우 (증거)
+
+**전략:** 대부분 기능은 `main`에서 기능 단위 커밋, **퀴즈 풀기**만 `feat/quiz-play`
+브랜치로 분기·작업 후 `main`에 **병합**. 마지막에 **clone/pull 실습**.
+
+**커밋 그래프** (`git log --oneline --graph`)
+
+```text
+* f582c24 Feat: 보너스 구현 (랜덤 출제·문제 수 선택·힌트·삭제·히스토리)
+* e1d9b86 Feat: 손상 파일 복구 및 종료 시 안전 저장 보강
+* a725758 Feat: 점수 확인 및 최고 점수 갱신 구현
+* 295981f Feat: 퀴즈 추가 기능 및 파일 저장 구현
+* f8bed5d Feat: 퀴즈 목록 조회 기능 구현
+*   befa3cd Merge: 퀴즈 풀기 기능(feat/quiz-play) 병합
+|\
+| * d5f0aca Feat: 퀴즈 풀기 기능 구현 (정오답 판정·결과 표시)
+|/
+* edcf66a Feat: QuizGame 골격 - 메뉴 루프 및 state.json 로드/세이브
+* a9bbc23 Feat: 입력 검증 헬퍼 구현 (공백·숫자·범위·빈입력)
+* 60cd13d Feat: 영화 주제 기본 퀴즈 5문항 추가
+* c5a4396 Feat: Quiz 클래스 구현 (문제·선택지·정답·힌트)
+* eb7a7f6 Chore: 퀴즈 게임 프로젝트 스캐폴드 및 .gitignore 추가
+```
+
+> 📸 위 그래프 스크린샷: `docs/screenshots/git_graph.png` (실습 PC에서 캡처 후 삽입)
+> ![git graph](docs/screenshots/git_graph.png)
+
+**Git 7종 명령 사용 기록**
+
+| 명령 | 사용처 |
+|------|--------|
+| `init` | 저장소 최초 생성 (`git init -b main`) |
+| `add` / `commit` | 12개 기능 단위 커밋 |
+| `checkout` | `git checkout -b feat/quiz-play` (기능 브랜치 생성) |
+| `merge` | `git merge --no-ff feat/quiz-play` (main 병합) |
+| `push` | GitHub `main` 업로드 (아래 슬롯) |
+| `clone` / `pull` | 저장소 복제 실습 (아래 슬롯) |
+
+**GitHub 최초 업로드** (실습 PC)
+
+```bash
+gh repo create codyssey-week1-quiz-game --public --source=. --remote=origin --push
+# 또는: git remote add origin https://github.com/SSUNOWL/codyssey-week1-quiz-game.git
+#       git push -u origin main
+```
+
+<details><summary>실행 출력 붙여넣기</summary>
+
+```text
+(실습 PC에서 push 출력 붙여넣기 — 토큰 등 민감정보 마스킹)
+```
+</details>
+
+**clone / pull 실습** (실습 PC)
+
+```bash
+# 1) 별도 폴더로 clone
+cd ..
+git clone https://github.com/SSUNOWL/codyssey-week1-quiz-game.git codyssey-week1-quiz-game-clone
+
+# 2) clone 쪽에서 한 줄 수정 후 push
+cd codyssey-week1-quiz-game-clone
+echo "" >> README.md   # 예: 마지막 줄에 공백 추가
+git commit -am "Docs: clone 실습용 README 수정"
+git push
+
+# 3) 원본 작업 폴더에서 pull 로 변경 가져오기
+cd ../codyssey-week1-quiz-game
+git pull
+```
+
+<details><summary>실행 출력 붙여넣기</summary>
+
+```text
+(clone / push / pull 출력 붙여넣기)
+```
+</details>
+
+## 10. 실행 결과 스크린샷 (실습 PC 캡처)
+
+| 화면 | 파일 |
+|------|------|
+| 메뉴 | `docs/screenshots/menu.png` |
+| 퀴즈 풀기 | `docs/screenshots/play.png` |
+| 퀴즈 추가 | `docs/screenshots/add_quiz.png` |
+| 점수 확인 | `docs/screenshots/score.png` |
+| 개발 환경(파이썬 버전·Git 설정) | `docs/screenshots/env.png` |
+
+<!-- 캡처 후 아래 주석을 해제해 삽입
+![메뉴](docs/screenshots/menu.png)
+![퀴즈 풀기](docs/screenshots/play.png)
+![퀴즈 추가](docs/screenshots/add_quiz.png)
+![점수 확인](docs/screenshots/score.png)
+-->
+
+## 11. 트러블슈팅
+
+### 1) 윈도우 콘솔에서 한글·이모지 출력 시 `UnicodeEncodeError`
+- **문제:** cp949 콘솔에서 `⚠️`·한글 출력 시 인코딩 오류로 비정상 종료.
+- **원인:** 표준 출력 인코딩이 UTF-8이 아니라 cp949.
+- **해결:** `main.py`에서 실행 시작 시 `sys.stdout/stdin.reconfigure(encoding="utf-8")`로
+  통일. 지원되지 않는 환경이면 조용히 무시(try/except)해 다른 OS에도 안전.
+
+### 2) 힌트 사용 후에도 정답이 점수에 반영되던 문제
+- **문제:** 힌트를 보고 맞혀도 정답으로 집계돼 "힌트 시 점수 차감"이 무의미.
+- **원인:** 정답 여부만 확인하고 힌트 사용 여부를 반영하지 않음.
+- **해결:** `_read_answer()`가 `(선택, 힌트사용여부)`를 함께 반환하도록 바꾸고,
+  `정답 and not 힌트사용`일 때만 정답으로 집계.
+
+## 12. 수행 체크리스트
+
+- [x] 메뉴 분기(풀기/추가/목록/점수/삭제/종료) + 잘못된 입력 처리
+- [x] `Quiz` 클래스(문제·선택지4·정답1~4·힌트) + 출력/정답확인 메서드
+- [x] 기본 영화 퀴즈 6문항(5개 이상)
+- [x] 퀴즈 풀기(정오답·결과) — `feat/quiz-play` 브랜치 → `main` 병합
+- [x] 퀴즈 추가/목록/점수(최고점수 갱신·저장)
+- [x] `state.json` 저장·불러오기 + 없음/손상 복구
+- [x] 공통 입력/예외 + Ctrl+C·EOF 안전 종료
+- [x] 커밋 12개(+병합) · 브랜치+병합 · 7종 명령
+- [x] 보너스 5종(랜덤·문항수·힌트·삭제·히스토리)
+- [ ] (실습 PC) push · clone/pull 출력 + 스크린샷 5종 삽입
