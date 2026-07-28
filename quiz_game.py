@@ -23,7 +23,7 @@ class QuizGame:
     def __init__(self, path=DATA_PATH):
         self.path = path
         self.quizzes = []        # list[Quiz]
-        self.best_score = 0      # 최고 점수(백분율)
+        self.best_score = None   # 최고 점수(백분율). None = 아직 안 풀었음
         self.history = []        # 게임 기록 리스트(보너스)
         self.load()              # 시작 시 파일(or 기본 데이터)에서 상태 복원
 
@@ -35,18 +35,19 @@ class QuizGame:
         if not os.path.exists(self.path):
             print("📂 저장된 데이터가 없어 기본 퀴즈로 시작합니다.")
             self.quizzes = default_quizzes()
-            self.best_score = 0
+            self.best_score = None
             self.history = []
             return
 
         with open(self.path, "r", encoding="utf-8") as f:
             data = json.load(f)
         self.quizzes = [Quiz.from_dict(d) for d in data.get("quizzes", [])]
-        self.best_score = int(data.get("best_score", 0))
+        raw_best = data.get("best_score", None)
+        self.best_score = int(raw_best) if isinstance(raw_best, (int, float)) else None
         self.history = list(data.get("history", []))
         if not self.quizzes:  # 파일에 퀴즈가 하나도 없으면 기본으로 보강
             self.quizzes = default_quizzes()
-        print(f"📂 저장된 데이터를 불러왔습니다. (퀴즈 {len(self.quizzes)}개, 최고점수 {self.best_score}점)")
+        print(f"📂 저장된 데이터를 불러왔습니다. (퀴즈 {len(self.quizzes)}개, 최고점수 {self.best_score_text()})")
 
     def save(self):
         """현재 상태(퀴즈/최고점수/기록)를 state.json에 UTF-8로 저장."""
@@ -57,6 +58,10 @@ class QuizGame:
         }
         with open(self.path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
+
+    def best_score_text(self):
+        """최고 점수를 사람이 읽기 좋은 문자열로. 아직 안 풀었으면 '아직 없음'."""
+        return "아직 없음" if self.best_score is None else f"{self.best_score}점"
 
     # ------------------------------------------------------------------
     # 메뉴 / 실행 루프
@@ -119,9 +124,11 @@ class QuizGame:
         score = int(correct / total * 100)  # 백분율 점수
         print("\n" + "=" * 40)
         print(f"🏆 결과: {total}문제 중 {correct}문제 정답! ({score}점)")
-        if score > self.best_score:
+        if self.best_score is None or score > self.best_score:
             self.best_score = score
             print("🎉 새로운 최고 점수입니다!")
+        else:
+            print(f"   (현재 최고 점수: {self.best_score}점)")
         print("=" * 40)
         self.save()  # 최고 점수 갱신 결과를 파일에 반영
 
@@ -156,7 +163,11 @@ class QuizGame:
         print("-" * 40)
 
     def show_score(self):
-        print("🚧 (준비 중) 점수 확인 기능은 곧 제공됩니다.")
+        """최고 점수를 보여준다. 아직 한 번도 풀지 않았으면 안내한다."""
+        if self.best_score is None:
+            print("\n🏆 아직 퀴즈를 풀지 않았습니다. '퀴즈 풀기'로 최고 점수에 도전해 보세요!")
+            return
+        print(f"\n🏆 최고 점수: {self.best_score}점")
 
     def delete_quiz(self):
         print("🚧 (준비 중) 퀴즈 삭제 기능은 곧 제공됩니다.")
