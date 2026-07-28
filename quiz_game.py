@@ -9,6 +9,8 @@
 
 import json
 import os
+import random
+from datetime import datetime
 
 from quiz import Quiz
 from default_quizzes import default_quizzes
@@ -120,36 +122,79 @@ class QuizGame:
     # ------------------------------------------------------------------
     # 기능 메서드 (다음 커밋에서 구현)
     # ------------------------------------------------------------------
+    def _read_answer(self, quiz):
+        """정답(1~4) 또는 힌트('h')를 입력받는다.
+
+        반환값: (선택한 번호, 힌트 사용 여부)
+        힌트를 보면 used_hint=True가 되어 해당 문제는 점수에 포함되지 않는다(점수 차감).
+        """
+        used_hint = False
+        while True:
+            raw = input("정답 입력 (1-4, 힌트는 h): ").strip().lower()
+            if raw == "":
+                print("⚠️  빈 입력입니다. 1-4 숫자 또는 h를 입력하세요.")
+                continue
+            if raw == "h":  # 보너스: 힌트
+                if quiz.has_hint():
+                    print(f"💡 힌트: {quiz.hint}  (힌트를 보면 이 문제는 점수에서 제외됩니다)")
+                    used_hint = True
+                else:
+                    print("ℹ️  이 문제에는 힌트가 없습니다.")
+                continue
+            try:
+                value = int(raw)
+            except ValueError:
+                print("⚠️  숫자가 아닙니다. 1-4 숫자 또는 h를 입력하세요.")
+                continue
+            if not 1 <= value <= Quiz.CHOICE_COUNT:
+                print(f"⚠️  1-{Quiz.CHOICE_COUNT} 사이의 숫자를 입력하세요.")
+                continue
+            return value, used_hint
+
     def play(self):
-        """저장된 퀴즈를 순서대로 출제하고, 정오답 판정 후 결과를 보여준다."""
+        """퀴즈를 출제한다. (보너스: 문제 수 선택 + 랜덤 출제 + 힌트 + 기록 저장)"""
         if not self.quizzes:
             print("\n😢 아직 등록된 퀴즈가 없습니다. 먼저 '퀴즈 추가'로 문제를 만들어 주세요.")
             return
 
-        total = len(self.quizzes)
-        print(f"\n📝 퀴즈를 시작합니다! (총 {total}문제)")
+        available = len(self.quizzes)
+        # 보너스 1) 문제 수 선택
+        count = read_int(f"\n몇 문제를 풀까요? (1-{available}): ", 1, available)
+        # 보너스 2) 랜덤 출제: 무작위로 count개를 뽑아 순서도 섞는다
+        selected = random.sample(self.quizzes, count)
 
+        print(f"\n📝 퀴즈를 시작합니다! (총 {count}문제, 무작위 출제)")
         correct = 0
-        for number, quiz in enumerate(self.quizzes, start=1):
+        for number, quiz in enumerate(selected, start=1):
             print("\n" + "-" * 40)
             print(quiz.render(number))
-            choice = read_int("\n정답 입력 (1-4): ", 1, 4)
-            if quiz.is_correct(choice):
+            choice, used_hint = self._read_answer(quiz)
+            if quiz.is_correct(choice) and not used_hint:
                 print("✅ 정답입니다!")
                 correct += 1
+            elif quiz.is_correct(choice) and used_hint:
+                print("✅ 정답이지만 힌트를 사용해 이 문제는 점수에 포함되지 않습니다.")
             else:
                 print(f"❌ 오답입니다. 정답은 {quiz.answer}번입니다.")
 
-        score = int(correct / total * 100)  # 백분율 점수
+        score = int(correct / count * 100)  # 백분율 점수
         print("\n" + "=" * 40)
-        print(f"🏆 결과: {total}문제 중 {correct}문제 정답! ({score}점)")
+        print(f"🏆 결과: {count}문제 중 {correct}문제 정답! ({score}점)")
         if self.best_score is None or score > self.best_score:
             self.best_score = score
             print("🎉 새로운 최고 점수입니다!")
         else:
             print(f"   (현재 최고 점수: {self.best_score}점)")
         print("=" * 40)
-        self.save()  # 최고 점수 갱신 결과를 파일에 반영
+
+        # 보너스 5) 점수 기록 히스토리: 날짜/시간·문제 수·정답 수·점수 저장
+        self.history.append({
+            "datetime": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "total": count,
+            "correct": correct,
+            "score": score,
+        })
+        self.save()  # 최고 점수·기록을 파일에 반영
 
     def add_quiz(self):
         """사용자에게 문제·선택지 4개·정답 번호(+힌트)를 받아 새 퀴즈를 등록하고 저장한다."""
@@ -187,6 +232,22 @@ class QuizGame:
             print("\n🏆 아직 퀴즈를 풀지 않았습니다. '퀴즈 풀기'로 최고 점수에 도전해 보세요!")
             return
         print(f"\n🏆 최고 점수: {self.best_score}점")
+        # 보너스 5) 최근 게임 기록(최대 5개) 표시
+        if self.history:
+            print("\n📜 최근 기록")
+            print("-" * 40)
+            for record in self.history[-5:]:
+                print(f"  {record['datetime']}  |  "
+                      f"{record['total']}문제 중 {record['correct']}개 정답  |  {record['score']}점")
+            print("-" * 40)
 
     def delete_quiz(self):
-        print("🚧 (준비 중) 퀴즈 삭제 기능은 곧 제공됩니다.")
+        """보너스: 목록에서 번호를 골라 퀴즈를 삭제하고 파일에 반영한다."""
+        if not self.quizzes:
+            print("\n🗑️  삭제할 퀴즈가 없습니다.")
+            return
+        self.list_quizzes()
+        number = read_int(f"삭제할 퀴즈 번호 (1-{len(self.quizzes)}): ", 1, len(self.quizzes))
+        removed = self.quizzes.pop(number - 1)
+        self.save()
+        print(f"🗑️  삭제되었습니다: {removed.question}")
