@@ -52,6 +52,9 @@ class QuizGame:
         try:
             with open(self.path, "r", encoding="utf-8") as f:
                 data = json.load(f)
+            if not isinstance(data, dict):
+                # 최상위가 객체가 아니면(예: [] 또는 null) 손상으로 간주 → 아래 except에서 복구
+                raise ValueError("최상위 구조가 객체(dict)가 아닙니다")
             quizzes = [Quiz.from_dict(d) for d in data.get("quizzes", [])]
             raw_best = data.get("best_score", None)
             best_score = int(raw_best) if isinstance(raw_best, (int, float)) else None
