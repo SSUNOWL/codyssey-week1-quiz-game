@@ -496,17 +496,25 @@ sunj03217920@c4r6s7 codyssey-week1-quiz-game %
 
 ## 11. 트러블슈팅
 
-### 1) 윈도우 콘솔에서 한글·이모지 출력 시 `UnicodeEncodeError`
-- **문제:** cp949 콘솔에서 `⚠️`·한글 출력 시 인코딩 오류로 비정상 종료.
-- **원인:** 표준 출력 인코딩이 UTF-8이 아니라 cp949.
-- **해결:** `main.py`에서 실행 시작 시 `sys.stdout/stdin.reconfigure(encoding="utf-8")`로
-  통일. 지원되지 않는 환경이면 조용히 무시(try/except)해 다른 OS에도 안전.
+### 1) 저장 파일(`state.json`)이 손상되면 다음 실행이 통째로 종료됨
+- **문제:** 저장 형식을 확인하려고 `state.json`을 직접 열어 값을 고치다가(따옴표를
+  빠뜨리는 등) 저장했더니, 다음번 `python main.py` 실행 때 프로그램이 시작하자마자
+  `json.JSONDecodeError`를 내며 게임에 들어가지도 못하고 종료됐다.
+- **원인:** `load()`가 파일 내용을 그대로 `json.load()`로 신뢰해 파싱하다 보니, 형식이
+  조금만 어긋나도 예외가 그대로 위로 전파돼 프로그램 전체가 비정상 종료됐다.
+- **해결:** `load()`를 `try/except (json.JSONDecodeError, OSError, ValueError, KeyError,
+  TypeError)`로 감싸, 손상을 감지하면 안내 메시지를 출력하고 `_use_defaults()`로 기본
+  퀴즈로 복구하도록 했다. 이제 파일이 깨져 있어도 게임은 항상 실행된다. (`quiz_game.py`의 `load()`)
 
-### 2) 힌트 사용 후에도 정답이 점수에 반영되던 문제
-- **문제:** 힌트를 보고 맞혀도 정답으로 집계돼 "힌트 시 점수 차감"이 무의미.
-- **원인:** 정답 여부만 확인하고 힌트 사용 여부를 반영하지 않음.
-- **해결:** `_read_answer()`가 `(선택, 힌트사용여부)`를 함께 반환하도록 바꾸고,
-  `정답 and not 힌트사용`일 때만 정답으로 집계.
+### 2) 게임 도중 Ctrl+C로 끄면 트레이스백이 뜨고 저장이 보장되지 않음
+- **문제:** 메뉴나 정답 입력을 기다리는 중 `Ctrl+C`로 종료했더니, 빨간
+  `KeyboardInterrupt` 트레이스백이 그대로 노출되며 비정상 종료됐다. 정상 종료(메뉴 6번)와
+  달리 저장 단계를 거치지 않아 진행 중이던 상태가 저장된다는 보장도 없었다.
+- **원인:** `input()` 대기 중 발생하는 `KeyboardInterrupt`(Ctrl+C)와 `EOFError`(입력 종료)가
+  아무 데서도 처리되지 않고 최상위까지 전파됐다.
+- **해결:** `main.py`에서 `game.run()`을 `try/except (KeyboardInterrupt, EOFError)`로 감싸,
+  중단 신호가 와도 안내 문구를 출력하고 `game.save()`로 현재 상태를 저장한 뒤 깔끔하게
+  종료하도록 했다. (`main.py`)
 
 ## 12. 수행 체크리스트
 
@@ -519,7 +527,7 @@ sunj03217920@c4r6s7 codyssey-week1-quiz-game %
 - [x] 공통 입력/예외 + Ctrl+C·EOF 안전 종료
 - [x] 커밋 12개(+병합) · 브랜치+병합 · 7종 명령
 - [x] 보너스 5종(랜덤·문항수·힌트·삭제·히스토리)
-- [ ] (실습 PC) push · clone/pull 출력 + 스크린샷 5종 삽입
+- [x] (실습 PC) push · clone/pull 출력 + 스크린샷 6종 삽입
   
  
  
