@@ -395,19 +395,76 @@ Everything up-to-date
 **clone / pull 실습** (실습 PC)
 
 ```bash
-# 1) 별도 폴더로 clone
-cd ..
-git clone https://github.com/SSUNOWL/codyssey-week1-quiz-game.git codyssey-week1-quiz-game-clone
+sunj03217920@c4r6s7 Desktop % git clone https://github.com/SSUNOWL/codyssey-week1-quiz-game
+Cloning into 'codyssey-week1-quiz-game'...
+remote: Enumerating objects: 57, done.
+remote: Counting objects: 100% (57/57), done.
+remote: Compressing objects: 100% (28/28), done.
+remote: Total 57 (delta 27), reused 55 (delta 25), pack-reused 0 (from 0)
+Receiving objects: 100% (57/57), 401.59 KiB | 57.37 MiB/s, done.
+Resolving deltas: 100% (27/27), done.
+sunj03217920@c4r6s7 Desktop % mkdir codyssey-week1-quiz-game-clone
+sunj03217920@c4r6s7 Desktop % cd codyssey-week1-quiz-game-clone/c
+cd: no such file or directory: codyssey-week1-quiz-game-clone/c
+sunj03217920@c4r6s7 Desktop % cd codyssey-week1-quiz-game-clone  
+sunj03217920@c4r6s7 codyssey-week1-quiz-game-clone % ls
+sunj03217920@c4r6s7 codyssey-week1-quiz-game-clone % git clone https://github.com/SSUNOWL/codyssey-week1-quiz-game
+Cloning into 'codyssey-week1-quiz-game'...
+remote: Enumerating objects: 57, done.
+remote: Counting objects: 100% (57/57), done.
+remote: Compressing objects: 100% (28/28), done.
+remote: Total 57 (delta 27), reused 55 (delta 25), pack-reused 0 (from 0)
+Receiving objects: 100% (57/57), 401.59 KiB | 50.20 MiB/s, done.
+Resolving deltas: 100% (27/27), done.
+sunj03217920@c4r6s7 codyssey-week1-quiz-game-clone % ls 
+codyssey-week1-quiz-game
+sunj03217920@c4r6s7 codyssey-week1-quiz-game-clone % cd codyssey-week1-quiz-game 
+sunj03217920@c4r6s7 codyssey-week1-quiz-game % echo " " >> README.md
+sunj03217920@c4r6s7 codyssey-week1-quiz-game % git commit -am "Docs: clone 실습용 README 수정"
+[main 0c2391b] Docs: clone 실습용 README 수정
+ Committer: 김선재 <sunj03217920@c4r6s7.codyssey.kr>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
 
-# 2) clone 쪽에서 한 줄 수정 후 push
-cd codyssey-week1-quiz-game-clone
-echo "" >> README.md   # 예: 마지막 줄에 공백 추가
-git commit -am "Docs: clone 실습용 README 수정"
-git push
+    git config --global --edit
 
-# 3) 원본 작업 폴더에서 pull 로 변경 가져오기
-cd ../codyssey-week1-quiz-game
-git pull
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 1 file changed, 1 insertion(+)
+sunj03217920@c4r6s7 codyssey-week1-quiz-game % git push
+Enumerating objects: 5, done.
+Counting objects: 100% (5/5), done.
+Delta compression using up to 6 threads
+Compressing objects: 100% (3/3), done.
+Writing objects: 100% (3/3), 341 bytes | 341.00 KiB/s, done.
+Total 3 (delta 2), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (2/2), completed with 2 local objects.
+To https://github.com/SSUNOWL/codyssey-week1-quiz-game
+   180f954..0c2391b  main -> main
+sunj03217920@c4r6s7 codyssey-week1-quiz-game % cd ..
+sunj03217920@c4r6s7 codyssey-week1-quiz-game-clone % cd ..
+sunj03217920@c4r6s7 Desktop % cd ../codyssey-week1-quiz-game
+cd: no such file or directory: ../codyssey-week1-quiz-game
+sunj03217920@c4r6s7 Desktop % cd codyssey-week1-quiz-game
+sunj03217920@c4r6s7 codyssey-week1-quiz-game % git pull
+remote: Enumerating objects: 5, done.
+remote: Counting objects: 100% (5/5), done.
+remote: Compressing objects: 100% (1/1), done.
+remote: Total 3 (delta 2), reused 3 (delta 2), pack-reused 0 (from 0)
+Unpacking objects: 100% (3/3), 321 bytes | 107.00 KiB/s, done.
+From https://github.com/SSUNOWL/codyssey-week1-quiz-game
+   180f954..0c2391b  main       -> origin/main
+Updating 180f954..0c2391b
+Fast-forward
+ README.md | 1 +
+ 1 file changed, 1 insertion(+)
+sunj03217920@c4r6s7 codyssey-week1-quiz-game % 
+
 ```
 
 <details><summary>실행 출력 붙여넣기</summary>
@@ -421,18 +478,21 @@ git pull
 
 | 화면 | 파일 |
 |------|------|
-| 메뉴 | `docs/screenshots/menu.png` |
-| 퀴즈 풀기 | `docs/screenshots/play.png` |
-| 퀴즈 추가 | `docs/screenshots/add_quiz.png` |
-| 점수 확인 | `docs/screenshots/score.png` |
-| 개발 환경(파이썬 버전·Git 설정) | `docs/screenshots/env.png` |
+| 메뉴 | `docs/screenshots/1.%20퀴즈%20메뉴.png` |
+| 퀴즈 풀기 | `docs/screenshots/2.퀴즈%20풀기.png` |
+| 퀴즈 풀기 | `docs/screenshots/3.%20퀴즈%20풀기.png` |
+| 퀴즈 추가 | `docs/screenshots/4.%20퀴즈%20만들기.png` |
+| 점수 확인 | `docs/screenshots/5.%20점수%20확인.png` |
+| 개발 환경(파이썬 버전·Git 설정) | `docs/screenshots/6.%20실행환경.png` |
 
-<!-- 캡처 후 아래 주석을 해제해 삽입
-![메뉴](docs/screenshots/menu.png)
-![퀴즈 풀기](docs/screenshots/play.png)
-![퀴즈 추가](docs/screenshots/add_quiz.png)
-![점수 확인](docs/screenshots/score.png)
--->
+
+![메뉴](docs/screenshots/1.%20퀴즈%20메뉴.png)
+![퀴즈 풀기](docs/screenshots/2.퀴즈%20풀기.png)
+![퀴즈 풀기](docs/screenshots/3.%20퀴즈%20풀기.png)
+![점수 확인](docs/screenshots/4.%20퀴즈%20만들기.png)
+![점수 확인](docs/screenshots/5.%20점수%20확인.png)
+![점수 확인](docs/screenshots/6.%20실행환경.png)
+
 
 ## 11. 트러블슈팅
 
