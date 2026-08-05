@@ -38,12 +38,3 @@ def read_nonempty(prompt):
             print("⚠️  빈 값은 입력할 수 없습니다. 다시 입력하세요.")
             continue
         return text
-
-
-def read_menu_choice(prompt, low, high):
-    """메뉴 선택 전용 입력.
-
-    'h'(힌트)처럼 숫자가 아닌 특수 입력을 다루지 않는 순수 메뉴용이며,
-    내부적으로 read_int를 그대로 사용한다.
-    """
-    return read_int(prompt, low, high)
