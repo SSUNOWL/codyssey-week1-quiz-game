@@ -2,9 +2,6 @@
 
 속성: 퀴즈 목록(quizzes), 최고 점수(best_score), 게임 기록(history), 저장 경로(path).
 메서드: 메뉴 표시/실행 루프, 퀴즈 풀기/추가/목록/삭제/점수, 파일 저장/불러오기.
-
-이 커밋에서는 '골격'(메뉴 루프 + state.json 로드/세이브)을 만든다.
-각 기능(풀기/추가/목록/점수/삭제)은 이후 커밋에서 채운다.
 """
 
 import json
@@ -123,7 +120,7 @@ class QuizGame:
                 break
 
     # ------------------------------------------------------------------
-    # 기능 메서드 (다음 커밋에서 구현)
+    # 기능 메서드 (풀기 / 추가 / 목록 / 점수 / 삭제)
     # ------------------------------------------------------------------
     def _read_answer(self, quiz):
         """정답(1~4) 또는 힌트('h')를 입력받는다.
@@ -172,10 +169,11 @@ class QuizGame:
             print("\n" + "-" * 40)
             print(quiz.render(number))
             choice, used_hint = self._read_answer(quiz)
-            if quiz.is_correct(choice) and not used_hint:
+            is_right = quiz.is_correct(choice)
+            if is_right and not used_hint:
                 print("✅ 정답입니다!")
                 correct += 1
-            elif quiz.is_correct(choice) and used_hint:
+            elif is_right:
                 print("✅ 정답이지만 힌트를 사용해 이 문제는 점수에 포함되지 않습니다.")
             else:
                 print(f"❌ 오답입니다. 정답은 {quiz.answer}번입니다.")
@@ -187,7 +185,7 @@ class QuizGame:
             self.best_score = score
             print("🎉 새로운 최고 점수입니다!")
         else:
-            print(f"   (현재 최고 점수: {self.best_score}점)")
+            print(f"   (현재 최고 점수: {self.best_score_text()})")
         print("=" * 40)
 
         # 보너스 5) 점수 기록 히스토리: 날짜/시간·문제 수·정답 수·점수 저장
@@ -234,7 +232,7 @@ class QuizGame:
         if self.best_score is None:
             print("\n🏆 아직 퀴즈를 풀지 않았습니다. '퀴즈 풀기'로 최고 점수에 도전해 보세요!")
             return
-        print(f"\n🏆 최고 점수: {self.best_score}점")
+        print(f"\n🏆 최고 점수: {self.best_score_text()}")
         # 보너스 5) 최근 게임 기록(최대 5개) 표시
         if self.history:
             print("\n📜 최근 기록")
