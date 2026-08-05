@@ -785,12 +785,6 @@ sunj03217920@c4r6s7 codyssey-week1-quiz-game %
 
 ```
 
-<details><summary>실행 출력 붙여넣기</summary>
-
-```text
-(clone / push / pull 출력 붙여넣기)
-```
-</details>
 
 ## 10. 실행 결과 스크린샷 (실습 PC 캡처)
 
