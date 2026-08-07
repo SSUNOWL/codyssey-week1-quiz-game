@@ -17,10 +17,12 @@ from helpers import read_int, read_nonempty
 class QuizGame:
     """퀴즈 게임의 상태와 동작을 모두 담당하는 클래스."""
 
-    DATA_PATH = "state.json"  # 프로젝트 루트에 저장
+    DATA_PATH = "state.json"      # 프로젝트 루트에 저장
+    BACKUP_SUFFIX = ".bak"        # 백업 파일은 state.json.bak
 
     def __init__(self, path=DATA_PATH):
         self.path = path
+        self.backup_path = path + self.BACKUP_SUFFIX
         self.quizzes = []        # list[Quiz]
         self.best_score = None   # 최고 점수(백분율). None = 아직 안 풀었음
         self.history = []        # 게임 기록 리스트(보너스)
@@ -35,48 +37,69 @@ class QuizGame:
         self.best_score = None
         self.history = []
 
-    def load(self):
-        """state.json에서 상태를 불러온다.
+    def _read_state(self, path):
+        """path에서 상태를 읽어 (퀴즈 목록, 최고 점수, 기록)으로 돌려준다.
 
-        - 파일이 없으면(첫 실행) 기본 퀴즈로 시작한다.
-        - 파일이 손상되었거나 읽기 오류가 나면 안내 후 기본 퀴즈로 복구한다.
+        내용이 조금이라도 어긋나면 예외를 그대로 낸다. '어디까지 믿을 수 있는지'를
+        판단하는 곳은 여기 한 곳이고, 실패했을 때 무엇으로 대체할지는 load()가 정한다.
         """
-        if not os.path.exists(self.path):
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, dict):
+            # 최상위가 객체가 아니면(예: [] 또는 null) 손상으로 간주 → load()의 except가 받는다
+            raise ValueError("최상위 구조가 객체(dict)가 아닙니다")
+        quizzes = [Quiz.from_dict(d) for d in data.get("quizzes", [])]
+        raw_best = data.get("best_score", None)
+        best_score = int(raw_best) if isinstance(raw_best, (int, float)) else None
+        history = list(data.get("history", []))
+        return quizzes, best_score, history
+
+    def load(self):
+        """상태를 복원한다. 본 파일 → 백업 파일 → 기본 퀴즈 순으로 시도한다.
+
+        - 두 파일이 모두 없으면(첫 실행) 기본 퀴즈로 시작한다.
+        - 본 파일이 손상되면 백업(state.json.bak)으로 복구를 시도한다.
+        - 둘 다 손상되어도 기본 퀴즈가 코드에 내장되어 있으므로 게임은 항상 시작된다.
+        """
+        if not os.path.exists(self.path) and not os.path.exists(self.backup_path):
             print("📂 저장된 데이터가 없어 기본 퀴즈로 시작합니다.")
             self._use_defaults()
             return
 
-        try:
-            with open(self.path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            if not isinstance(data, dict):
-                # 최상위가 객체가 아니면(예: [] 또는 null) 손상으로 간주 → 아래 except에서 복구
-                raise ValueError("최상위 구조가 객체(dict)가 아닙니다")
-            quizzes = [Quiz.from_dict(d) for d in data.get("quizzes", [])]
-            raw_best = data.get("best_score", None)
-            best_score = int(raw_best) if isinstance(raw_best, (int, float)) else None
-            history = list(data.get("history", []))
-        except (json.JSONDecodeError, OSError, ValueError, KeyError, TypeError) as error:
-            # 파일이 깨졌거나 형식이 어긋난 경우 → 프로그램을 멈추지 않고 복구한다.
-            print(f"⚠️  데이터 파일이 손상되어 기본 퀴즈로 복구합니다. (원인: {error})")
-            self._use_defaults()
+        for path, label in ((self.path, "데이터 파일"), (self.backup_path, "백업 파일")):
+            if not os.path.exists(path):
+                continue
+            try:
+                # 셋 다 성공했을 때만 한꺼번에 대입된다(중간에 실패하면 상태가 반쯤 덮이지 않음).
+                self.quizzes, self.best_score, self.history = self._read_state(path)
+            except (json.JSONDecodeError, OSError, ValueError, KeyError, TypeError) as error:
+                print(f"⚠️  {label}이 손상되었습니다. (원인: {error})")
+                continue
+            if not self.quizzes:  # 파일은 멀쩡한데 퀴즈가 0개면 빈 게임이 되므로 기본값으로
+                self.quizzes = default_quizzes()
+            if path == self.backup_path:
+                print("♻️  백업 파일에서 복구했습니다.")
+            print(f"📂 저장된 데이터를 불러왔습니다. (퀴즈 {len(self.quizzes)}개, 최고점수 {self.best_score_text()})")
             return
 
-        self.quizzes = quizzes if quizzes else default_quizzes()
-        self.best_score = best_score
-        self.history = history
-        print(f"📂 저장된 데이터를 불러왔습니다. (퀴즈 {len(self.quizzes)}개, 최고점수 {self.best_score_text()})")
+        print("⚠️  데이터 파일과 백업 파일이 모두 손상되어 기본 퀴즈로 복구합니다.")
+        self._use_defaults()
 
     def save(self):
-        """현재 상태(퀴즈/최고점수/기록)를 state.json에 UTF-8로 저장."""
+        """현재 상태를 state.json에, 같은 내용을 state.json.bak에 UTF-8로 저장.
+
+        백업에는 방금 검증된 메모리 상태만 기록되므로, 손상된 내용이 백업으로 번지지 않는다.
+        """
         data = {
             "quizzes": [q.to_dict() for q in self.quizzes],
             "best_score": self.best_score,
             "history": self.history,
         }
+        text = json.dumps(data, ensure_ascii=False, indent=2)
         try:
-            with open(self.path, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
+            for path in (self.path, self.backup_path):
+                with open(path, "w", encoding="utf-8") as f:
+                    f.write(text)
         except OSError as error:
             print(f"⚠️  저장 중 오류가 발생했습니다: {error}")
 

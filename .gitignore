@@ -7,6 +7,7 @@ venv/
 
 # --- 런타임 데이터 (첫 실행 시 자동 생성, 커밋 금지) ---
 state.json
+state.json.bak
 
 # --- Secrets ---
 .env
